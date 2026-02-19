@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import userRoutes from "./src/routes/userRoutes.js";
+import mainrouter from "./src/routes/index.js";
 import authRoutes from "./src/modules/auth/auth.routes.js";
 import { connectDB, disconnectDB } from "./src/config/db.js";
 import { Server } from "node:http";
@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-app.use("/api/users", userRoutes);
+app.use("/api/users", mainrouter);
 app.use("/api/auth", authRoutes);
 const PORT = process.env.PORT;
 

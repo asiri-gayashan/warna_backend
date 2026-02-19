@@ -1,44 +1,76 @@
 import { prisma } from "../../config/db.js";
 import bcrypt from "bcrypt";
+import {generateToken} from "../../utils/generateToken.js";
+
+const registerUser = async (req, res) => {
+  const { fullName, email, mobile, password, role, province, address } = req.body;
+
+  const userExists = await prisma.User.findUnique({
+    where: {
+      email: email,
+    },
+  });
+
+  if (userExists) {
+    return res.status(400).json({ message: "User already exists" });
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  const user = await prisma.User.create({
+    data: {
+      fullName,
+      email,
+      password: hashedPassword,
+      mobile,
+      role,
+      province,
+      address,
+    },
+  });
 
 
-const registerUser = async(req, res)=>{
+  
+  const token = generateToken(user);
 
-    const {id, fullName, email, password, mobile} = req.body;
-    const userExists = await prisma.test.findUnique({
-        where: {
-            email: email
-        }
+
+ res.status(201).json({
+      status: "true",
+      data: user,
+      token,
     });
 
-    if(userExists){
-        return res.status(400).json({ message: "User already exists" });
-    }
-
-    const salt  = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+  // res.json({ message: "User Registered", data: user, token });
+};
 
 
-    const newUser = await prisma.test.create({
-        data: {
-            id,
-            fullName,
-            email,
-            password: hashedPassword,
-            mobile
-        }
-    });
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
 
-    res.json({ message: "User Registered", data: newUser });
+  const user = await prisma.User.findUnique({
+    where: {
+      email: email,
+    },
+  });
 
-}
+  if (!user) {
+    return res.status(400).json({ message: "Invalid email" });
+  }
 
-
-
-// const loginUser = async(req, res) =>{
-
-// }
+  const isPasswordValid = await bcrypt.compare(password, user.password);
 
 
+  if (!isPasswordValid) {
+    return res.status(400).json({ message: "Invalid email or password" });
+  }
 
-export default registerUser;
+  const token = generateToken(user);
+
+  res.json({  status: true, data: user, token });
+
+
+ 
+};
+
+export { registerUser, loginUser };
