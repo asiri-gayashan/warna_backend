@@ -5,6 +5,7 @@ import mainrouter from "./src/routes/index.js";
 import authRoutes from "./src/modules/auth/auth.routes.js";
 import { connectDB, disconnectDB } from "./src/config/db.js";
 import { Server } from "node:http";
+import classRoutes from "./src/modules/classes/classes.routes.js";
 
 const app = express();
 app.use(express.json());
@@ -18,6 +19,11 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/users", mainrouter);
 app.use("/api/auth", authRoutes);
+app.use("/api/classes", classRoutes);
+
+
+
+
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {

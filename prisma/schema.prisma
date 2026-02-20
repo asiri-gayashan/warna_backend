@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -31,92 +31,68 @@ model User {
   status    Status   @default(ACTIVE)
   createdAt DateTime @default(now())
 
-studentProfile StudentProfile?
+  // Relations
+  studentProfile StudentProfile?
   tutorProfile   TutorProfile?
 
-  tutorClasses   Class[]        @relation("TutorClasses")
-  classEnrolls   ClassStudent[] @relation("StudentEnrollments")
-
+  tutorClasses Class[]        @relation("TutorClasses")
+  classEnrolls ClassStudent[] @relation("StudentEnrollments")
 }
 
-
 model StudentProfile {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   grade     String
   createdAt DateTime @default(now())
-
-  classLinks ClassStudent[]
 }
-
-
 
 model TutorProfile {
-  id             String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  subject        String?
-  isIndependent  Boolean  @default(false)
-  createdAt      DateTime @default(now())
-
-  classes        Class[]  @relation("TutorClasses")
+  subject       String?
+  isIndependent Boolean  @default(false)
+  createdAt     DateTime @default(now())
 }
 
-
-
-
-
 model Class {
-  id            String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  teacherId     String
-  teacher       User     @relation("TutorClasses", fields: [teacherId], references: [id])
+  teacherId String
+  teacher   User   @relation("TutorClasses", fields: [teacherId], references: [id])
 
-  grade         String
-  instituteId   String?
+  grade       String
+  instituteId String?
 
-  subject       String
-  name          String
+  subject String
+  name    String
 
   schedule_day  String
   schedule_time String
   end_time      String
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  students      ClassStudent[]
+  students ClassStudent[]
 }
-
-
-
 
 model ClassStudent {
-  id              String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  classId         String
-  studentId       String
+  classId   String
+  studentId String
 
-  class           Class @relation(fields: [classId], references: [id], onDelete: Cascade)
-  student         User  @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student User  @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
 
-  joined_at       DateTime @default(now())
-  payment_status  String
+  joined_at      DateTime @default(now())
+  payment_status String
 }
 
-
-
-
-model test{
-  id        String   @id @default(uuid())
-  fullName  String
-  email     String  @unique
-  password  String
-  mobile    String
-}
 
 
