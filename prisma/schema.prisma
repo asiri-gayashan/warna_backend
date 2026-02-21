@@ -64,20 +64,32 @@ model Class {
   id String @id @default(uuid())
 
   teacherId String
-  teacher   User   @relation("TutorClasses", fields: [teacherId], references: [id])
+  teacher User @relation("TutorClasses", fields: [teacherId], references: [id])
 
-  grade       String
-  instituteId String?
-
+  // Basic Info
   subject String
-  name    String
+  grade   String
+  name String
 
-  schedule_day  String
-  schedule_time String
-  end_time      String
+  // Schedule
+  day      String
+  time     String
+  duration String
+
+  // Class Details
+  location    String
+  description String
+
+
+  // Status
+  status Boolean @default(true)
+
+  // Optional institute
+  instituteId String?
 
   createdAt DateTime @default(now())
 
+  // Relations
   students ClassStudent[]
 }
 

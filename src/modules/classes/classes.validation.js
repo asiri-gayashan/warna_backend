@@ -2,42 +2,54 @@
 export const validateCreateClass = (data) => {
   const errors = {};
 
-  // Check teacherId
+  // Teacher
   if (!data.teacherId || typeof data.teacherId !== "string") {
     errors.teacherId = "teacherId is required and must be a string";
   }
 
-  // Check grade
-  if (!data.grade || typeof data.grade !== "string") {
-    errors.grade = "grade is required and must be a string";
-  }
-
-  // Check subject
-  if (!data.subject || typeof data.subject !== "string") {
-    errors.subject = "subject is required and must be a string";
-  }
-
-  // Check name
+  // Basic Info
   if (!data.name || typeof data.name !== "string") {
-    errors.name = "name is required and must be a string";
+    errors.name = "name is required";
   }
 
-  // Check schedule_day
-  if (!data.schedule_day || typeof data.schedule_day !== "string") {
-    errors.schedule_day = "schedule_day is required and must be a string";
+  if (!data.subject || typeof data.subject !== "string") {
+    errors.subject = "subject is required";
   }
 
-  // Check schedule_time
-  if (!data.schedule_time || typeof data.schedule_time !== "string") {
-    errors.schedule_time = "schedule_time is required and must be a string";
+  if (!data.grade || typeof data.grade !== "string") {
+    errors.grade = "grade is required";
   }
 
-  // Check end_time
-  if (!data.end_time || typeof data.end_time !== "string") {
-    errors.end_time = "end_time is required and must be a string";
+  // Schedule
+  if (!data.day || typeof data.day !== "string") {
+    errors.day = "day is required";
   }
 
+  if (!data.time || typeof data.time !== "string") {
+    errors.time = "time is required";
+  }
 
+  if (!data.duration || typeof data.duration !== "string") {
+    errors.duration = "duration is required";
+  }
+
+  // Class Details
+  if (!data.location || typeof data.location !== "string") {
+    errors.location = "location is required";
+  }
+
+  if (!data.description || typeof data.description !== "string") {
+    errors.description = "description is required";
+  }
+
+  // Optional fields
+  // if (data.status !== undefined && typeof data.status !== "boolean") {
+  //   errors.status = "status must be boolean";
+  // }
+
+  // if (data.instituteId !== undefined && data.instituteId !== null && typeof data.instituteId !== "string") {
+  //   errors.instituteId = "instituteId must be string or null";
+  // }
 
   return {
     isValid: Object.keys(errors).length === 0,

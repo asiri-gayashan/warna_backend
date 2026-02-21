@@ -1,19 +1,31 @@
 import { prisma } from "../../config/db.js";
 
 // Create a new class
+
+
 export const createClassService = async (data) => {
   try {
-    const class_data = await prisma.Class.create({
+    const class_data = await prisma.class.create({
       data: {
         teacherId: data.teacherId,
-        grade: data.grade,
         subject: data.subject,
+        grade: data.grade,
         name: data.name,
-        schedule_day: data.schedule_day,
-        schedule_time: data.schedule_time,
-        end_time: data.end_time,
+
+        // Schedule
+        day: data.day,
+        time: data.time,
+        duration: data.duration,
+
+        // Class Details
+        location: data.location,
+        description: data.description,
+
+        // Optional
+        status: data.status ?? true,
         instituteId: data.instituteId || null,
       },
+
       include: {
         teacher: {
           select: {
@@ -24,6 +36,7 @@ export const createClassService = async (data) => {
         },
       },
     });
+
     return class_data;
   } catch (error) {
     throw new Error(`Error creating class: ${error.message}`);
