@@ -30,6 +30,8 @@ const registerUser = async (req, res) => {
     },
   });
 
+  
+
 
   
   const token = generateToken(user);
