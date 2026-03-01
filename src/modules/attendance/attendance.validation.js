@@ -101,16 +101,4 @@ export const validateUpdateClass = (data) => {
   };
 };
 
-// Validation for class ID
-export const validateClassId = (classId) => {
-  if (!classId || typeof classId !== "string") {
-    return {
-      isValid: false,
-      error: "classId is required and must be a string",
-    };
-  }
 
-  return {
-    isValid: true,
-  };
-};
