@@ -82,9 +82,9 @@ export const validateUpdateClass = (data) => {
     errors.schedule_time = "schedule_time must be a string";
   }
 
-  if (data.end_time && typeof data.end_time !== "string") {
-    errors.end_time = "end_time must be a string";
-  }
+  // if (data.end_time && typeof data.end_time !== "string") {
+  //   errors.end_time = "end_time must be a string";
+  // }
 
   if (data.instituteId && typeof data.instituteId !== "string") {
     errors.instituteId = "instituteId must be a string";
