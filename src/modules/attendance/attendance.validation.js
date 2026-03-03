@@ -86,9 +86,9 @@ export const validateUpdateClass = (data) => {
     errors.end_time = "end_time must be a string";
   }
 
-//   if (data.instituteId && typeof data.instituteId !== "string") {
-//     errors.instituteId = "instituteId must be a string";
-//   }
+  if (data.instituteId && typeof data.instituteId !== "string") {
+    errors.instituteId = "instituteId must be a string";
+  }
 
   // Check that at least one field is provided for update
   if (Object.keys(data).length === 0) {
