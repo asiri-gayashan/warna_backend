@@ -91,9 +91,9 @@ export const validateUpdateClass = (data) => {
   }
 
   // Check that at least one field is provided for update
-  if (Object.keys(data).length === 0) {
-    errors.general = "At least one field must be provided for update";
-  }
+  // if (Object.keys(data).length === 0) {
+  //   errors.general = "At least one field must be provided for update";
+  // }
 
   return {
     isValid: Object.keys(errors).length === 0,
