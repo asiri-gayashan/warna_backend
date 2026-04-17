@@ -38,6 +38,8 @@ process.on("unhandledRejection", (err) => {
   });
 });
 
+ 
+
 process.on("unhandledException", async (err) => {
   console.error("Unhandled Exception:", err);
   await disconnectDB();
