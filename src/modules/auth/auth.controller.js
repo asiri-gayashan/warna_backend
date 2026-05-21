@@ -1,63 +1,159 @@
 import { prisma } from "../../config/db.js";
 import bcrypt from "bcrypt";
-import {generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken,} from "../../utils/generateToken.js";
+import { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken, } from "../../utils/generateToken.js";
 
+
+
+//------------------------------------------------------------------------- Register User -------------------------------------------------------------------------
 const registerUser = async (req, res) => {
-  const { fullName, email, mobile, password, role, province, address } = req.body;
-
-  const userExists = await prisma.User.findUnique({
-    where: {
-      email: email,
-    },
-  });
-
-  if (userExists) {
-    return res.status(400).json({ message: "User already exists" });
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  const user = await prisma.User.create({
-    data: {
-      fullName,
+  try {
+    const {
+      // users table
+      full_name,
       email,
-      password: hashedPassword,
-      mobile,
+      password,
+      phone,
       role,
-      province,
-      address,
-    },
-  });
+      district_id,
+      address_line1,
+      address_line2,
+      description,
 
-  
+      // student table
+      grade,
+      dob,
+      school,
 
+      // tutor table
+      subject_id,
+      experience,
+    } = req.body;
 
-  
-  // const token = generateToken(user);
+    let  userRoleData = {};
 
-
- res.status(200).json({
-      status: "true",
-      data: user,
-      // token,
+    // Check existing user
+    const userExists = await prisma.users.findFirst({
+      where: {
+        OR: [
+          { email },
+          { phone },
+        ],
+      },
     });
 
-  // res.json({ message: "User Registered", data: user, token });
+    if (userExists) {
+      if (userExists.email === email) {
+        return res.status(400).json({
+          status: false,
+          message: "Email already exists",
+        });
+      }
+
+      if (userExists.phone === phone) {
+        return res.status(400).json({
+          status: false,
+          message: "Phone already exists",
+        });
+      }
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user
+    const user = await prisma.users.create({
+      data: {
+        full_name,
+        email,
+        password: hashedPassword,
+        phone,
+        role,
+        district_id,
+        address_line1,
+        address_line2,
+        description,
+      },
+    });
+
+    // STUDENT
+    if (role === "STUDENT") {
+      userRoleData = await prisma.student.create({
+        data: {
+          users: {
+            connect: {
+              id: user.id,
+            },
+          },
+      
+          dob: new Date(dob),
+          school,
+          grade: parseInt(grade),
+        },
+      });
+    }
+
+    // TUTOR data a
+    if (role === "TUTOR") {
+      userRoleData = await prisma.tutor.create({
+        data: {
+          users: {
+            connect: {
+              id: user.id,
+            },
+          },
+      
+          subject: {
+            connect: {
+              id: subject_id,
+            },
+          },
+      
+          experience: parseInt(experience),
+          dob: new Date(dob),
+        },
+      });
+    }
+
+    // INSTITUTE
+    if (role === "INSTITUTE") {
+      userRoleData = await prisma.institute.create({
+        data: {
+          user_id: user.id,
+        },
+      });
+    }
+
+    return res.status(201).json({
+      status: true,
+      message: "User registered successfully",
+      // userRoleData,
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
 };
 
 
+
+//------------------------------------------------------------------------- Login User -------------------------------------------------------------------------
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   // console.log(req.body);
 
-  const user = await prisma.User.findUnique({
-    where: { 
+  const user = await prisma.users.findUnique({
+    where: {
       email: email,
     },
-  });   
- 
+  });
+
   if (!user) {
     return res.status(400).json({ message: "Invalid email" });
   }
@@ -70,13 +166,17 @@ const loginUser = async (req, res) => {
   }
 
   const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user); 
+  const refreshToken = generateRefreshToken(user);
 
 
   // console.log(accessToken, refreshToken);
-  res.status(200).json({  success: true, user, accessToken, refreshToken });
+  res.status(200).json({ success: true, user, accessToken, refreshToken });
 
-}; 
+};
+
+
+
+//------------------------------------------------------------------------- Refresh Token -------------------------------------------------------------------------
 
 const refresh = async (req, res) => {
   try {
@@ -107,7 +207,7 @@ const refresh = async (req, res) => {
     };
 
     // Generate new tokens
-    const newAccessToken  = generateAccessToken(user);
+    const newAccessToken = generateAccessToken(user);
     const newRefreshToken = refreshToken;
 
     return res.json({
