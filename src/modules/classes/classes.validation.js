@@ -1,55 +1,100 @@
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
+
+const isValidUuid = (value) =>
+  typeof value === "string" && UUID_REGEX.test(value);
+
+const isValidTime = (value) =>
+  typeof value === "string" && TIME_REGEX.test(value);
+
 // Validation for creating a class
 export const validateCreateClass = (data) => {
   const errors = {};
 
-  // Teacher
-  if (!data.teacherId || typeof data.teacherId !== "string") {
-    errors.teacherId = "teacherId is required and must be a string";
-  }
-
-  // Basic Info
   if (!data.name || typeof data.name !== "string") {
-    errors.name = "name is required";
+    errors.name = "name is required and must be a string";
   }
 
-  if (!data.subject || typeof data.subject !== "string") {
-    errors.subject = "subject is required";
+  if (!isValidUuid(data.subject_id)) {
+    errors.subject_id = "subject_id is required and must be a valid UUID";
   }
 
-  if (!data.grade || typeof data.grade !== "string") {
-    errors.grade = "grade is required";
+  if (!isValidUuid(data.tutor_id)) {
+    errors.tutor_id = "tutor_id is required and must be a valid UUID";
   }
 
-  // Schedule
-  if (!data.day || typeof data.day !== "string") {
+  if (
+    data.institute_id !== undefined &&
+    data.institute_id !== null &&
+    !isValidUuid(data.institute_id)
+  ) {
+    errors.institute_id = "institute_id must be a valid UUID";
+  }
+
+  if (!isValidTime(data.start_time)) {
+    errors.start_time =
+      "start_time is required and must be in HH:mm or HH:mm:ss format";
+  }
+
+  if (!isValidTime(data.end_time)) {
+    errors.end_time =
+      "end_time is required and must be in HH:mm or HH:mm:ss format";
+  }
+
+  if (data.day === undefined || data.day === null) {
     errors.day = "day is required";
+  } else if (
+    typeof data.day !== "number" ||
+    !Number.isInteger(data.day) ||
+    data.day < 1 ||
+    data.day > 7
+  ) {
+    errors.day = "day must be an integer between 1 and 7";
   }
 
-  if (!data.time || typeof data.time !== "string") {
-    errors.time = "time is required";
+  if (data.grade === undefined || data.grade === null) {
+    errors.grade = "grade is required";
+  } else if (
+    typeof data.grade !== "number" ||
+    !Number.isInteger(data.grade) ||
+    data.grade < 1
+  ) {
+    errors.grade = "grade must be a positive integer";
   }
 
-  if (!data.duration || typeof data.duration !== "string") {
-    errors.duration = "duration is required";
+  if (data.amount === undefined || data.amount === null) {
+    errors.amount = "amount is required";
+  } else if (typeof data.amount !== "number" || data.amount < 0) {
+    errors.amount = "amount must be a non-negative number";
   }
 
-  // Class Details
-  if (!data.location || typeof data.location !== "string") {
-    errors.location = "location is required";
+  if (
+    data.institute_commission !== undefined &&
+    (typeof data.institute_commission !== "number" ||
+      data.institute_commission < 0)
+  ) {
+    errors.institute_commission =
+      "institute_commission must be a non-negative number";
   }
 
-  if (!data.description || typeof data.description !== "string") {
-    errors.description = "description is required";
+  if (data.description !== undefined && typeof data.description !== "string") {
+    errors.description = "description must be a string";
   }
 
-  // Optional fields
-  // if (data.status !== undefined && typeof data.status !== "boolean") {
-  //   errors.status = "status must be boolean";
-  // }
+  if (data.location !== undefined && typeof data.location !== "string") {
+    errors.location = "location must be a string";
+  }
 
-  // if (data.instituteId !== undefined && data.instituteId !== null && typeof data.instituteId !== "string") {
-  //   errors.instituteId = "instituteId must be string or null";
-  // }
+  if (
+    data.student_count !== undefined &&
+    (typeof data.student_count !== "number" ||
+      !Number.isInteger(data.student_count) ||
+      data.student_count < 0)
+  ) {
+    errors.student_count = "student_count must be a non-negative integer";
+  }
 
   return {
     isValid: Object.keys(errors).length === 0,
@@ -61,36 +106,92 @@ export const validateCreateClass = (data) => {
 export const validateUpdateClass = (data) => {
   const errors = {};
 
-  // All fields are optional for update
-  if (data.grade && typeof data.grade !== "string") {
-    errors.grade = "grade must be a string";
-  }
-
-  if (data.subject && typeof data.subject !== "string") {
-    errors.subject = "subject must be a string";
-  }
-
-  if (data.name && typeof data.name !== "string") {
+  if (data.name !== undefined && typeof data.name !== "string") {
     errors.name = "name must be a string";
   }
 
-  if (data.schedule_day && typeof data.schedule_day !== "string") {
-    errors.schedule_day = "schedule_day must be a string";
+  if (data.subject_id !== undefined && !isValidUuid(data.subject_id)) {
+    errors.subject_id = "subject_id must be a valid UUID";
   }
 
-  if (data.schedule_time && typeof data.schedule_time !== "string") {
-    errors.schedule_time = "schedule_time must be a string";
+  if (data.tutor_id !== undefined && !isValidUuid(data.tutor_id)) {
+    errors.tutor_id = "tutor_id must be a valid UUID";
   }
 
-  if (data.end_time && typeof data.end_time !== "string") {
-    errors.end_time = "end_time must be a string";
+  if (
+    data.institute_id !== undefined &&
+    data.institute_id !== null &&
+    !isValidUuid(data.institute_id)
+  ) {
+    errors.institute_id = "institute_id must be a valid UUID or null";
   }
 
-//   if (data.instituteId && typeof data.instituteId !== "string") {
-//     errors.instituteId = "instituteId must be a string";
-//   }
+  if (data.start_time !== undefined && !isValidTime(data.start_time)) {
+    errors.start_time = "start_time must be in HH:mm or HH:mm:ss format";
+  }
 
-  // Check that at least one field is provided for update
+  if (data.end_time !== undefined && !isValidTime(data.end_time)) {
+    errors.end_time = "end_time must be in HH:mm or HH:mm:ss format";
+  }
+
+  if (data.day !== undefined) {
+    if (
+      typeof data.day !== "number" ||
+      !Number.isInteger(data.day) ||
+      data.day < 0 ||
+      data.day > 6
+    ) {
+      errors.day = "day must be an integer between 0 and 6";
+    }
+  }
+
+  if (data.grade !== undefined) {
+    if (
+      typeof data.grade !== "number" ||
+      !Number.isInteger(data.grade) ||
+      data.grade < 1
+    ) {
+      errors.grade = "grade must be a positive integer";
+    }
+  }
+
+  if (data.amount !== undefined) {
+    if (typeof data.amount !== "number" || data.amount < 0) {
+      errors.amount = "amount must be a non-negative number";
+    }
+  }
+
+  if (data.institute_commission !== undefined) {
+    if (
+      typeof data.institute_commission !== "number" ||
+      data.institute_commission < 0
+    ) {
+      errors.institute_commission =
+        "institute_commission must be a non-negative number";
+    }
+  }
+
+  if (data.description !== undefined && typeof data.description !== "string") {
+    errors.description = "description must be a string";
+  }
+
+  if (data.location !== undefined && typeof data.location !== "string") {
+    errors.location = "location must be a string";
+  }
+
+  if (data.status !== undefined && typeof data.status !== "string") {
+    errors.status = "status must be a string";
+  }
+
+  if (
+    data.student_count !== undefined &&
+    (typeof data.student_count !== "number" ||
+      !Number.isInteger(data.student_count) ||
+      data.student_count < 0)
+  ) {
+    errors.student_count = "student_count must be a non-negative integer";
+  }
+
   if (Object.keys(data).length === 0) {
     errors.general = "At least one field must be provided for update";
   }
@@ -106,7 +207,14 @@ export const validateClassId = (classId) => {
   if (!classId || typeof classId !== "string") {
     return {
       isValid: false,
-      error: "classId is required and must be a string",
+      error: "class id is required and must be a string",
+    };
+  }
+
+  if (!UUID_REGEX.test(classId)) {
+    return {
+      isValid: false,
+      error: "class id must be a valid UUID",
     };
   }
 

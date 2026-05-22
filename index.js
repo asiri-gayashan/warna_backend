@@ -7,6 +7,7 @@ import { connectDB, disconnectDB } from "./src/config/db.js";
 import { Server } from "node:http";
 import classRoutes from "./src/modules/classes/classes.routes.js";
 import metadataRoutes from "./src/modules/metadata/metadata.routes.js";
+import teacherRoutes from "./src/modules/teacher/teacher.routes.js";
 
 const app = express();
 app.use(express.json());
@@ -22,6 +23,7 @@ app.use("/api/users", mainrouter);
 app.use("/api/auth", authRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/metadata",  metadataRoutes);
+app.use("/api/teachers", teacherRoutes);
 
 
 
