@@ -10,6 +10,75 @@ const toTimeDate = (time) => {
   return new Date(`1970-01-01T${time}Z`);
 };
 
+const classInclude = {
+  subject: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  users_classes_tutor_idTousers: {
+    select: {
+      id: true,
+      full_name: true,
+      email: true,
+      phone: true,
+    },
+  },
+  users_classes_institute_idTousers: {
+    select: {
+      id: true,
+      full_name: true,
+    },
+  },
+};
+
+const formatTime = (date) => {
+  const d = new Date(date);
+  return d.toISOString().substring(11, 19);
+};
+
+const formatDuration = (startTime, endTime) => {
+  const diffMs = new Date(endTime) - new Date(startTime);
+  const totalMinutes = Math.round(diffMs / 60000);
+
+  if (totalMinutes <= 0) {
+    return "0m";
+  }
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h`;
+  }
+
+  return `${minutes}m`;
+};
+
+const formatClassResponse = (classItem) => {
+  const {
+    subject,
+    users_classes_tutor_idTousers,
+    users_classes_institute_idTousers,
+    ...rest
+  } = classItem;
+
+  return {
+    ...rest,
+    subject_name: subject?.name ?? null,
+    tutor_name: users_classes_tutor_idTousers?.full_name ?? null,
+    institute_name: users_classes_institute_idTousers?.full_name ?? null,
+    duration: formatDuration(rest.start_time, rest.end_time),
+    start_time: formatTime(rest.start_time),
+    end_time: formatTime(rest.end_time),
+  };
+};
+
 const findScheduleConflict = async ({
   tutor_id,
   institute_id,
@@ -78,12 +147,13 @@ export const createClassService = async (data) => {
 export const getAllClassesService = async () => {
   try {
     const classes = await prisma.classes.findMany({
+      include: classInclude,
       orderBy: {
         created_at: "desc",
       },
     });
 
-    return classes;
+    return classes.map(formatClassResponse);
   } catch (error) {
     throw new Error(`Error fetching classes: ${error.message}`);
   }
@@ -93,13 +163,14 @@ export const getClassByIdService = async (classId) => {
   try {
     const class_data = await prisma.classes.findUnique({
       where: { id: classId },
+      include: classInclude,
     });
 
     if (!class_data) {
       throw new Error("Class not found");
     }
 
-    return class_data;
+    return formatClassResponse(class_data);
   } catch (error) {
     if (error.message === "Class not found") {
       throw error;
