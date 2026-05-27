@@ -51,7 +51,7 @@ export const createClass = async (req, res) => {
       message: error.message || "Error creating class",
     });
   }
-};
+}; 
 
 // Get all classes
 export const getAllClasses = async (req, res) => {

@@ -90,7 +90,7 @@ model class_students {
   status     Status?
   created_at DateTime @default(now()) @db.Timestamptz(6)
   classes    classes  @relation(fields: [class_id], references: [id])
-  student    student  @relation(fields: [student_id], references: [id])
+  student    users    @relation(fields: [student_id], references: [id])
 }
 
 model classes {
@@ -165,7 +165,6 @@ model student {
   school          String?
   grade           Int?              @db.SmallInt
   attendance      attendance[]
-  class_students  class_students[]
   users           users             @relation(fields: [user_id], references: [id])
   student_payment student_payment[]
 }
@@ -237,6 +236,7 @@ model users {
   status                              Status            @default(ACTIVE)
   role                                Role
   attendance                          attendance[]
+  class_students                      class_students[]
   classes_classes_institute_idTousers classes[]         @relation("classes_institute_idTousers")
   classes_classes_tutor_idTousers     classes[]         @relation("classes_tutor_idTousers")
   institute                           institute?
