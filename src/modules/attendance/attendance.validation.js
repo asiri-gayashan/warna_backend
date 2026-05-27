@@ -1,104 +1,101 @@
-// Validation for creating a class
-export const validateCreateClass = (data) => {
-  const errors = {};
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-  // Teacher
-  if (!data.teacherId || typeof data.teacherId !== "string") {
-    errors.teacherId = "teacherId is required and must be a string";
-  }
+const ALLOWED_ATTENDANCE_STATUS = ["PRESENT", "ABSENT"];
 
-  // Basic Info
-  if (!data.name || typeof data.name !== "string") {
-    errors.name = "name is required";
-  }
+const isUUID = (value) => typeof value === "string" && UUID_REGEX.test(value);
 
-  if (!data.subject || typeof data.subject !== "string") {
-    errors.subject = "subject is required";
-  }
-
-  if (!data.grade || typeof data.grade !== "string") {
-    errors.grade = "grade is required";
-  }
-
-  // Schedule
-  if (!data.day || typeof data.day !== "string") {
-    errors.day = "day is required";
-  }
-
-  if (!data.time || typeof data.time !== "string") {
-    errors.time = "time is required";
-  }
-
-  if (!data.duration || typeof data.duration !== "string") {
-    errors.duration = "duration is required";
-  }
-
-  // Class Details
-  if (!data.location || typeof data.location !== "string") {
-    errors.location = "location is required";
-  }
-
-  if (!data.description || typeof data.description !== "string") {
-    errors.description = "description is required";
-  }
-
-  // Optional fields
-  // if (data.status !== undefined && typeof data.status !== "boolean") {
-  //   errors.status = "status must be boolean";
-  // }
-
-  // if (data.instituteId !== undefined && data.instituteId !== null && typeof data.instituteId !== "string") {
-  //   errors.instituteId = "instituteId must be string or null";
-  // }
-
-  return {
-    isValid: Object.keys(errors).length === 0,
-    errors,
-  };
+const normalizeStatus = (status) => {
+  if (typeof status !== "string") return status;
+  return status.trim().toUpperCase();
 };
 
-// Validation for updating a class
-export const validateUpdateClass = (data) => {
-  const errors = {};
-
-  // All fields are optional for update
-  if (data.grade && typeof data.grade !== "string") {
-    errors.grade = "grade must be a string";
+export const validateAttendanceId = (id) => {
+  if (!id || typeof id !== "string") {
+    return { isValid: false, error: "id is required and must be a string" };
   }
-
-  if (data.subject && typeof data.subject !== "string") {
-    errors.subject = "subject must be a string";
+  if (!isUUID(id)) {
+    return { isValid: false, error: "id must be a valid UUID" };
   }
-
-  if (data.name && typeof data.name !== "string") {
-    errors.name = "name must be a string";
-  }
-
-  if (data.schedule_day && typeof data.schedule_day !== "string") {
-    errors.schedule_day = "schedule_day must be a string";
-  }
-
-  if (data.schedule_time && typeof data.schedule_time !== "string") {
-    errors.schedule_time = "schedule_time must be a string";
-  }
-
-  // if (data.end_time && typeof data.end_time !== "string") {
-  //   errors.end_time = "end_time must be a string";
-  // }
-
-  if (data.instituteId && typeof data.instituteId !== "string") {
-    errors.instituteId = "instituteId must be a string";
-  }
-
-  // Check that at least one field is provided for update
-  // if (Object.keys(data).length === 0) {
-  //   errors.general = "At least one field must be provided for update";
-  // }
-
-  return {
-    isValid: Object.keys(errors).length === 0,
-    errors,
-  };
+  return { isValid: true };
 };
 
+export const validateClassIdAndDate = (classId, date) => {
+  if (!isUUID(classId)) {
+    return { isValid: false, error: "classId must be a valid UUID" };
+  }
+  if (!date || isNaN(new Date(date).getTime())) {
+    return {
+      isValid: false,
+      error: "date is required and must be a valid date (YYYY-MM-DD)",
+    };
+  }
+  return { isValid: true };
+};
 
+export const validateInsertAttendancePayload = (payload) => {
+  if (!Array.isArray(payload)) {
+    return {
+      isValid: false,
+      errors: ["Request body must be an array of attendance records"],
+    };
+  }
+
+  if (payload.length === 0) {
+    return { isValid: false, errors: ["Array must not be empty"] };
+  }
+
+  const errors = [];
+
+  payload.forEach((item, idx) => {
+    if (!item || typeof item !== "object") {
+      errors.push(`Item at index ${idx} must be an object`);
+      return;
+    }
+
+    if (!isUUID(item.class_id)) {
+      errors.push(`Item at index ${idx}: class_id must be a valid UUID`);
+    }
+
+    if (!isUUID(item.student_id)) {
+      errors.push(`Item at index ${idx}: student_id must be a valid UUID`);
+    }
+
+    if (!isUUID(item.marked_user_id)) {
+      errors.push(`Item at index ${idx}: marked_user_id must be a valid UUID`);
+    }
+
+    if (!item.status) {
+      errors.push(`Item at index ${idx}: status is required`);
+    } else {
+      const normalized = normalizeStatus(item.status);
+      if (!ALLOWED_ATTENDANCE_STATUS.includes(normalized)) {
+        errors.push(
+          `Item at index ${idx}: status must be one of ${ALLOWED_ATTENDANCE_STATUS.join(", ")}`
+        );
+      }
+    }
+  });
+
+  return { isValid: errors.length === 0, errors };
+};
+
+export const validateUpdateAttendanceStatus = (data) => {
+  if (!data || typeof data !== "object") {
+    return { isValid: false, error: "Body is required" };
+  }
+
+  if (data.status === undefined || data.status === null) {
+    return { isValid: false, error: "status is required" };
+  }
+
+  const normalized = normalizeStatus(data.status);
+  if (!ALLOWED_ATTENDANCE_STATUS.includes(normalized)) {
+    return {
+      isValid: false,
+      error: `status must be one of ${ALLOWED_ATTENDANCE_STATUS.join(", ")}`,
+    };
+  }
+
+  return { isValid: true, normalizedStatus: normalized };
+};

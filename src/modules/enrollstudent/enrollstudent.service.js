@@ -1,7 +1,7 @@
 import { prisma } from "../../config/db.js";
 
 const formatEnrollmentRow = (row) => {
-  const studentUser = row.student;
+  const studentUser = row.users;
   const studentProfile = studentUser?.student;
 
   return {
@@ -20,7 +20,7 @@ export const getAllEnrollStudentsService = async () => {
   try {
     const rows = await prisma.class_students.findMany({
       include: {
-        student: {
+        users: {
           select: {
             id: true,
             full_name: true,
@@ -46,7 +46,6 @@ export const getAllEnrollStudentsService = async () => {
 
 export const insertEnrollStudentsService = async (enrollments) => {
   try {
-    // create one-by-one so we can return the inserted rows
     const createdRows = [];
 
     for (const item of enrollments) {
@@ -62,17 +61,21 @@ export const insertEnrollStudentsService = async (enrollments) => {
                 : item.status,
           },
           include: {
-            student: {
+            users: {
               select: {
                 id: true,
                 full_name: true,
                 phone: true,
-                student: { select: { grade: true } },
+                student: {
+                  select: {
+                    grade: true,
+                  },
+                },
               },
             },
           },
         });
-      
+
         // increment class student count
         await tx.classes.update({
           where: {
@@ -84,13 +87,11 @@ export const insertEnrollStudentsService = async (enrollments) => {
             },
           },
         });
-      
+
         return enrollment;
       });
 
-
       createdRows.push(formatEnrollmentRow(created));
-      // createdRows.push(formatEnrollmentRow(created));
     }
 
     return createdRows;
@@ -113,12 +114,16 @@ export const updateEnrollmentStatusService = async (id, status) => {
       where: { id },
       data: { status },
       include: {
-        student: {
+        users: {
           select: {
             id: true,
             full_name: true,
             phone: true,
-            student: { select: { grade: true } },
+            student: {
+              select: {
+                grade: true,
+              },
+            },
           },
         },
       },
@@ -127,6 +132,7 @@ export const updateEnrollmentStatusService = async (id, status) => {
     return formatEnrollmentRow(updated);
   } catch (error) {
     if (error.message === "Enrollment not found") throw error;
+
     throw new Error(`Error updating enrollment: ${error.message}`);
   }
 };
@@ -134,15 +140,19 @@ export const updateEnrollmentStatusService = async (id, status) => {
 export const getAllEnrollStudentsByClassIdService = async (classId) => {
   try {
     const rows = await prisma.class_students.findMany({
-      where: { class_id: classId },
+      where: {
+        class_id: classId,
+      },
       include: {
-        student: {
+        users: {
           select: {
             id: true,
             full_name: true,
             phone: true,
             student: {
-              select: { grade: true },
+              select: {
+                grade: true,
+              },
             },
           },
         },
@@ -154,7 +164,8 @@ export const getAllEnrollStudentsByClassIdService = async (classId) => {
 
     return rows.map(formatEnrollmentRow);
   } catch (error) {
-    throw new Error(`Error fetching enrollments by classId: ${error.message}`);
+    throw new Error(
+      `Error fetching enrollments by classId: ${error.message}`
+    );
   }
 };
-

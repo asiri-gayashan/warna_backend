@@ -10,6 +10,8 @@ import metadataRoutes from "./src/modules/metadata/metadata.routes.js";
 import teacherRoutes from "./src/modules/teacher/teacher.routes.js";
 import enrollstudentRoutes from "./src/modules/enrollstudent/enrollstudent.routes.js";
 import studentRoutes from "./src/modules/student/student.routes.js";
+import attendanceRoutes from "./src/modules/attendance/attendance.route.js";
+
 
 const app = express();
 app.use(express.json());
@@ -28,7 +30,7 @@ app.use("/api/metadata",  metadataRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/enrollstudents", enrollstudentRoutes);
 app.use("/api/students", studentRoutes);
-
+app.use("/api/attendance", attendanceRoutes);
 
 
 
