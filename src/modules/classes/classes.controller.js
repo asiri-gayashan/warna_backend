@@ -35,30 +35,28 @@ export const createClass = async (req, res) => {
       data: newClass,
     });
   } catch (error) {
+    if (
+      error.message.includes(
+        "already has a class at this institute with an overlapping time"
+      )
+    ) {
+      return res.status(409).json({
+        status: false,
+        message: error.message,
+      });
+    }
+
     res.status(500).json({
       status: false,
       message: error.message || "Error creating class",
     });
   }
-};
+}; 
 
 // Get all classes
 export const getAllClasses = async (req, res) => {
   try {
-    // Extract optional filters from query parameters
-    const filters = {
-      teacherId: req.query.teacherId,
-      grade: req.query.grade,
-      subject: req.query.subject,
-    };
-
-    // Remove undefined filters
-    Object.keys(filters).forEach(
-      (key) => filters[key] === undefined && delete filters[key]
-    );
-
-    // Call service to get all classes
-    const classes = await getAllClassesService(filters);
+    const classes = await getAllClassesService();
 
     res.status(200).json({
       status: true,
@@ -151,6 +149,17 @@ export const updateClass = async (req, res) => {
       return res.status(404).json({
         status: false,
         message: "Class not found",
+      });
+    }
+
+    if (
+      error.message.includes(
+        "already has a class at this institute with an overlapping time"
+      )
+    ) {
+      return res.status(409).json({
+        status: false,
+        message: error.message,
       });
     }
 

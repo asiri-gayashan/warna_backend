@@ -1,224 +1,260 @@
 import { prisma } from "../../config/db.js";
 
-// Create a new class
+const SCHEDULE_CONFLICT_MESSAGE =
+  "This teacher already has a class at this institute with an overlapping time on the same day.";
 
+const toTimeDate = (time) => {
+  if (time instanceof Date) {
+    return time;
+  }
+  return new Date(`1970-01-01T${time}Z`);
+};
+
+const classInclude = {
+  subject: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  users_classes_tutor_idTousers: {
+    select: {
+      id: true,
+      full_name: true,
+      email: true,
+      phone: true,
+    },
+  },
+  users_classes_institute_idTousers: {
+    select: {
+      id: true,
+      full_name: true,
+    },
+  },
+};
+
+const formatTime = (date) => {
+  const d = new Date(date);
+  return d.toISOString().substring(11, 19);
+};
+
+const formatDuration = (startTime, endTime) => {
+  const diffMs = new Date(endTime) - new Date(startTime);
+  const totalMinutes = Math.round(diffMs / 60000);
+
+  if (totalMinutes <= 0) {
+    return "0m";
+  }
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h`;
+  }
+
+  return `${minutes}m`;
+};
+
+const formatClassResponse = (classItem) => {
+  const {
+    subject,
+    users_classes_tutor_idTousers,
+    users_classes_institute_idTousers,
+    ...rest
+  } = classItem;
+
+  return {
+    ...rest,
+    subject_name: subject?.name ?? null,
+    tutor_name: users_classes_tutor_idTousers?.full_name ?? null,
+    institute_name: users_classes_institute_idTousers?.full_name ?? null,
+    duration: formatDuration(rest.start_time, rest.end_time),
+    start_time: formatTime(rest.start_time),
+    end_time: formatTime(rest.end_time),
+  };
+};
+
+const findScheduleConflict = async ({
+  tutor_id,
+  institute_id,
+  day,
+  start_time,
+  end_time,
+  excludeId,
+}) => {
+  return prisma.classes.findFirst({
+    where: {
+      tutor_id,
+      institute_id: institute_id ?? null,
+      day,
+      ...(excludeId && { id: { not: excludeId } }),
+      start_time: { lt: end_time },
+      end_time: { gt: start_time },
+    },
+  });
+};
 
 export const createClassService = async (data) => {
   try {
-    const class_data = await prisma.class.create({
+    const start_time = toTimeDate(data.start_time);
+    const end_time = toTimeDate(data.end_time);
+
+    const conflict = await findScheduleConflict({
+      tutor_id: data.tutor_id,
+      institute_id: data.institute_id,
+      day: data.day,
+      start_time,
+      end_time,
+    });
+
+    if (conflict) {
+      throw new Error(SCHEDULE_CONFLICT_MESSAGE);
+    }
+
+    const class_data = await prisma.classes.create({
       data: {
-        teacherId: data.teacherId,
-        subject: data.subject,
-        grade: data.grade,
         name: data.name,
-
-        // Schedule
+        subject_id: data.subject_id,
+        tutor_id: data.tutor_id,
+        institute_id: data.institute_id,
+        start_time,
+        end_time,
         day: data.day,
-        time: data.time,
-        duration: data.duration,
-
-        // Class Details
-        location: data.location,
         description: data.description,
-
-        // Optional
-        status: data.status ?? true,
-        instituteId: data.instituteId || null,
-      },
-
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-          },
-        },
+        location: data.location,
+        grade: data.grade,
+        amount: data.amount,
+        institute_commission: data.institute_commission,
+        status: data.status || "ACTIVE",
+        student_count: data.student_count ?? 0,
       },
     });
 
     return class_data;
   } catch (error) {
+    if (error.message === SCHEDULE_CONFLICT_MESSAGE) {
+      throw error;
+    }
     throw new Error(`Error creating class: ${error.message}`);
   }
 };
 
-
-
-
-
-// Get all classes with optional filters
-export const getAllClassesService = async (filters = {}) => {
+export const getAllClassesService = async () => {
   try {
-    const where = {};
-
-    if (filters.teacherId) {
-      where.teacherId = filters.teacherId;
-    }
-
-    if (filters.grade) {
-      where.grade = filters.grade;
-    }
-
-    if (filters.subject) {
-      where.subject = {
-        contains: filters.subject,
-        mode: "insensitive",
-      };
-    }
-
-    const classes = await prisma.Class.findMany({
-      where,
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-          },
-        },
-        students: {
-          include: {
-            student: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-              },
-            },
-          },
-        },
-      },
+    const classes = await prisma.classes.findMany({
+      include: classInclude,
       orderBy: {
-        createdAt: "desc",
+        created_at: "desc",
       },
     });
 
-    return classes;
+    return classes.map(formatClassResponse);
   } catch (error) {
     throw new Error(`Error fetching classes: ${error.message}`);
   }
 };
 
-// Get class by ID
 export const getClassByIdService = async (classId) => {
   try {
-    const class_data = await prisma.Class.findUnique({
-      where: {
-        id: classId,
-      },
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            role: true,
-          },
-        },
-        students: {
-          include: {
-            student: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-              },
-            },
-          },
-        },
-      },
+    const class_data = await prisma.classes.findUnique({
+      where: { id: classId },
+      include: classInclude,
     });
 
     if (!class_data) {
       throw new Error("Class not found");
     }
 
-    return class_data;
+    return formatClassResponse(class_data);
   } catch (error) {
+    if (error.message === "Class not found") {
+      throw error;
+    }
     throw new Error(`Error fetching class: ${error.message}`);
   }
 };
 
-// Update a class
 export const updateClassService = async (classId, data) => {
   try {
-    // Check if class exists
-    const existingClass = await prisma.Class.findUnique({
-      where: {
-        id: classId,
-      },
+    const existingClass = await prisma.classes.findUnique({
+      where: { id: classId },
     });
 
     if (!existingClass) {
       throw new Error("Class not found");
     }
 
-    // Update class
-    const updatedClass = await prisma.Class.update({
-      where: {
-        id: classId,
-      },
+    const tutor_id = data.tutor_id ?? existingClass.tutor_id;
+    const institute_id =
+      data.institute_id !== undefined
+        ? data.institute_id
+        : existingClass.institute_id;
+    const day = data.day ?? existingClass.day;
+    const start_time = data.start_time
+      ? toTimeDate(data.start_time)
+      : existingClass.start_time;
+    const end_time = data.end_time
+      ? toTimeDate(data.end_time)
+      : existingClass.end_time;
+
+    const conflict = await findScheduleConflict({
+      tutor_id,
+      institute_id,
+      day,
+      start_time,
+      end_time,
+      excludeId: classId,
+    });
+
+    if (conflict) {
+      throw new Error(SCHEDULE_CONFLICT_MESSAGE);
+    }
+
+    const updatedClass = await prisma.classes.update({
+      where: { id: classId },
       data: {
-        ...(data.grade && { grade: data.grade }),
-        ...(data.subject && { subject: data.subject }),
-        ...(data.name && { name: data.name }),
-        ...(data.schedule_day && { schedule_day: data.schedule_day }),
-        ...(data.schedule_time && { schedule_time: data.schedule_time }),
-        ...(data.end_time && { end_time: data.end_time }),
-        ...(data.instituteId !== undefined && { instituteId: data.instituteId }),
-      },
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-          },
-        },
-        students: {
-          include: {
-            student: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-              },
-            },
-          },
-        },
+        ...data,
+        ...(data.start_time && { start_time }),
+        ...(data.end_time && { end_time }),
       },
     });
 
     return updatedClass;
   } catch (error) {
+    if (
+      error.message === "Class not found" ||
+      error.message === SCHEDULE_CONFLICT_MESSAGE
+    ) {
+      throw error;
+    }
     throw new Error(`Error updating class: ${error.message}`);
   }
 };
 
-// Delete a class
 export const deleteClassService = async (classId) => {
   try {
-    // Check if class exists
-    const existingClass = await prisma.Class.findUnique({
-      where: {
-        id: classId,
-      },
+    const existingClass = await prisma.classes.findUnique({
+      where: { id: classId },
     });
 
     if (!existingClass) {
       throw new Error("Class not found");
     }
 
-    // Delete class (cascade delete will handle ClassStudent records)
-    const deletedClass = await prisma.Class.delete({
-      where: {
-        id: classId,
-      },
+    const deletedClass = await prisma.classes.delete({
+      where: { id: classId },
     });
 
     return deletedClass;
   } catch (error) {
+    if (error.message === "Class not found") {
+      throw error;
+    }
     throw new Error(`Error deleting class: ${error.message}`);
   }
 };

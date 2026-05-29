@@ -1,7 +1,17 @@
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const ALLOWED_ATTENDANCE_STATUS = ["PRESENT", "ABSENT"];
+const ALLOWED_STATUS = [
+  "ACTIVE",
+  "INACTIVE",
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "SUCCESS",
+  "FAILED",
+  "PAID",
+  "NOTPAID",
+];
 
 const isUUID = (value) => typeof value === "string" && UUID_REGEX.test(value);
 
@@ -10,34 +20,28 @@ const normalizeStatus = (status) => {
   return status.trim().toUpperCase();
 };
 
-export const validateAttendanceId = (id) => {
+export const validateEnrollmentId = (id) => {
   if (!id || typeof id !== "string") {
     return { isValid: false, error: "id is required and must be a string" };
   }
+
   if (!isUUID(id)) {
     return { isValid: false, error: "id must be a valid UUID" };
   }
+
   return { isValid: true };
 };
 
-export const validateClassIdAndDate = (classId, date) => {
-  if (!isUUID(classId)) {
-    return { isValid: false, error: "classId must be a valid UUID" };
-  }
-  if (!date || isNaN(new Date(date).getTime())) {
-    return {
-      isValid: false,
-      error: "date is required and must be a valid date (YYYY-MM-DD)",
-    };
-  }
-  return { isValid: true };
+export const validateClassId = (id) => {
+  // class_id uses the same UUID format as enrollment table id
+  return validateEnrollmentId(id);
 };
 
-export const validateInsertAttendancePayload = (payload) => {
+export const validateEnrollStudentsPayload = (payload) => {
   if (!Array.isArray(payload)) {
     return {
       isValid: false,
-      errors: ["Request body must be an array of attendance records"],
+      errors: ["Request body must be an array of enrollments"],
     };
   }
 
@@ -61,26 +65,23 @@ export const validateInsertAttendancePayload = (payload) => {
       errors.push(`Item at index ${idx}: student_id must be a valid UUID`);
     }
 
-    if (!isUUID(item.marked_user_id)) {
-      errors.push(`Item at index ${idx}: marked_user_id must be a valid UUID`);
-    }
-
-    if (!item.status) {
-      errors.push(`Item at index ${idx}: status is required`);
-    } else {
+    if (item.status !== undefined && item.status !== null) {
       const normalized = normalizeStatus(item.status);
-      if (!ALLOWED_ATTENDANCE_STATUS.includes(normalized)) {
+      if (!ALLOWED_STATUS.includes(normalized)) {
         errors.push(
-          `Item at index ${idx}: status must be one of ${ALLOWED_ATTENDANCE_STATUS.join(", ")}`
+          `Item at index ${idx}: status must be one of ${ALLOWED_STATUS.join(", ")}`
         );
       }
     }
   });
 
-  return { isValid: errors.length === 0, errors };
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
 };
 
-export const validateUpdateAttendanceStatus = (data) => {
+export const validateUpdateEnrollmentStatus = (data) => {
   if (!data || typeof data !== "object") {
     return { isValid: false, error: "Body is required" };
   }
@@ -90,12 +91,13 @@ export const validateUpdateAttendanceStatus = (data) => {
   }
 
   const normalized = normalizeStatus(data.status);
-  if (!ALLOWED_ATTENDANCE_STATUS.includes(normalized)) {
+  if (!ALLOWED_STATUS.includes(normalized)) {
     return {
       isValid: false,
-      error: `status must be one of ${ALLOWED_ATTENDANCE_STATUS.join(", ")}`,
+      error: `status must be one of ${ALLOWED_STATUS.join(", ")}`,
     };
   }
 
   return { isValid: true, normalizedStatus: normalized };
 };
+

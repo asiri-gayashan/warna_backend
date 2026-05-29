@@ -7,6 +7,11 @@ import { connectDB, disconnectDB } from "./src/config/db.js";
 import { Server } from "node:http";
 import classRoutes from "./src/modules/classes/classes.routes.js";
 import metadataRoutes from "./src/modules/metadata/metadata.routes.js";
+import teacherRoutes from "./src/modules/teacher/teacher.routes.js";
+import enrollstudentRoutes from "./src/modules/enrollstudent/enrollstudent.routes.js";
+import studentRoutes from "./src/modules/student/student.routes.js";
+import attendanceRoutes from "./src/modules/attendance/attendance.route.js";
+import studentPaymentRoutes from "./src/modules/studentpayment/student-payment.routes.js";
 
 const app = express();
 app.use(express.json());
@@ -22,7 +27,11 @@ app.use("/api/users", mainrouter);
 app.use("/api/auth", authRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/metadata",  metadataRoutes);
-
+app.use("/api/teachers", teacherRoutes);
+app.use("/api/enrollstudents", enrollstudentRoutes);
+app.use("/api/students", studentRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/student-payments", studentPaymentRoutes);
 
 
 

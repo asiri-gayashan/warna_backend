@@ -8,8 +8,53 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Class {
+  id           String         @id
+  teacherId    String
+  grade        String
+  instituteId  String?
+  subject      String
+  createdAt    DateTime       @default(now())
+  day          String
+  description  String
+  duration     String
+  location     String
+  status       Boolean        @default(true)
+  time         String
+  name         String
+  User         User           @relation(fields: [teacherId], references: [id])
+  ClassStudent ClassStudent[]
+}
+
+model ClassStudent {
+  id             String   @id
+  classId        String
+  studentId      String
+  joined_at      DateTime @default(now())
+  payment_status String
+  Class          Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  User           User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StudentProfile {
+  id        String   @id
+  userId    String   @unique
+  grade     String
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TutorProfile {
+  id            String   @id
+  userId        String   @unique
+  subject       String?
+  isIndependent Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model User {
-  id             String          @id @default(uuid())
+  id             String          @id
   fullName       String
   email          String          @unique
   mobile         String
@@ -19,68 +64,22 @@ model User {
   address        String
   status         Status          @default(ACTIVE)
   createdAt      DateTime        @default(now())
-  tutorClasses   Class[]         @relation("TutorClasses")
-  classEnrolls   ClassStudent[]  @relation("StudentEnrollments")
-  studentProfile StudentProfile?
-  tutorProfile   TutorProfile?
-}
-
-model StudentProfile {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  grade     String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model TutorProfile {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  subject       String?
-  isIndependent Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Class {
-  id          String         @id @default(uuid())
-  teacherId   String
-  grade       String
-  instituteId String?
-  subject     String
-  createdAt   DateTime       @default(now())
-  day         String
-  description String
-  duration    String
-  location    String
-  status      Boolean        @default(true)
-  time        String
-  name        String
-  teacher     User           @relation("TutorClasses", fields: [teacherId], references: [id])
-  students    ClassStudent[]
-}
-
-model ClassStudent {
-  id             String   @id @default(uuid())
-  classId        String
-  studentId      String
-  joined_at      DateTime @default(now())
-  payment_status String
-  class          Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
-  student        User     @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  Class          Class[]
+  ClassStudent   ClassStudent[]
+  StudentProfile StudentProfile?
+  TutorProfile   TutorProfile?
 }
 
 model attendance {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  class_id       String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id     String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  date           DateTime @db.Timestamptz(6)
-  status         Status
-  marked_user_id String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_at     DateTime @default(now()) @db.Timestamptz(6)
-  classes        classes  @relation(fields: [class_id], references: [id])
-  users          users    @relation(fields: [marked_user_id], references: [id])
-  student        student  @relation(fields: [student_id], references: [id])
+  id                                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  class_id                               String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id                             String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  status                                 Status
+  marked_user_id                         String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at                             DateTime @default(now()) @db.Timestamptz(6)
+  classes                                classes  @relation(fields: [class_id], references: [id])
+  users_attendance_marked_user_idTousers users    @relation("attendance_marked_user_idTousers", fields: [marked_user_id], references: [id])
+  users_attendance_student_idTousers     users    @relation("attendance_student_idTousers", fields: [student_id], references: [id])
 }
 
 model class_students {
@@ -90,34 +89,33 @@ model class_students {
   status     Status?
   created_at DateTime @default(now()) @db.Timestamptz(6)
   classes    classes  @relation(fields: [class_id], references: [id])
-  student    student  @relation(fields: [student_id], references: [id])
+  users      users    @relation(fields: [student_id], references: [id])
 }
 
 model classes {
-  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                 String
-  subject_id           String            @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  grade_id             String            @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tutor_id             String            @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  institute_id         String?           @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  start_time           DateTime          @db.Timetz(6)
-  end_time             DateTime          @db.Timetz(6)
-  day                  Int               @db.SmallInt
-  description          String?
-  status               Status
-  created_at           DateTime          @default(now()) @db.Timestamptz(6)
-  student_count        Int?
-  amount               Float             @db.Real
-  institute_commission Float?            @db.Real
-  location             String?
-  attendance           attendance[]
-  class_students       class_students[]
-  grade                grade             @relation(fields: [grade_id], references: [id])
-  institute            institute?        @relation(fields: [institute_id], references: [id], onDelete: Restrict)
-  subject              subject           @relation(fields: [subject_id], references: [id])
-  tutor                tutor             @relation(fields: [tutor_id], references: [id])
-  student_payment      student_payment[]
-  tutor_payments       tutor_payments[]
+  id                                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                              String
+  subject_id                        String            @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tutor_id                          String            @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  institute_id                      String?           @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  start_time                        DateTime          @db.Timetz(6)
+  end_time                          DateTime          @db.Timetz(6)
+  day                               Int               @db.SmallInt
+  description                       String?
+  status                            Status
+  created_at                        DateTime          @default(now()) @db.Timestamptz(6)
+  student_count                     Int?
+  amount                            Float             @db.Real
+  institute_commission              Float?            @db.Real
+  location                          String?
+  grade                             Int               @db.SmallInt
+  attendance                        attendance[]
+  class_students                    class_students[]
+  users_classes_institute_idTousers users?            @relation("classes_institute_idTousers", fields: [institute_id], references: [id], onDelete: Restrict)
+  subject                           subject           @relation(fields: [subject_id], references: [id])
+  users_classes_tutor_idTousers     users             @relation("classes_tutor_idTousers", fields: [tutor_id], references: [id])
+  student_payment                   student_payment[]
+  tutor_payments                    tutor_payments[]
 }
 
 model district {
@@ -128,9 +126,8 @@ model district {
 }
 
 model grade {
-  id      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name    String
-  classes classes[]
+  id   String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name String
 }
 
 model institute {
@@ -141,7 +138,6 @@ model institute {
   tutor_count    Int              @default(0)
   class_count    Int              @default(0)
   created_at     DateTime         @default(now()) @db.Timestamptz(6)
-  classes        classes[]
   users          users            @relation(fields: [user_id], references: [id])
   institute_hall institute_hall[]
 }
@@ -161,30 +157,27 @@ model roles {
 }
 
 model student {
-  user_id         String            @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  dob             DateTime          @db.Date
-  created_at      DateTime          @default(now()) @db.Timestamptz(6)
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  school          String?
-  grade           Int?              @db.SmallInt
-  attendance      attendance[]
-  class_students  class_students[]
-  users           users             @relation(fields: [user_id], references: [id])
-  student_payment student_payment[]
+  user_id    String   @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dob        DateTime @db.Date
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  school     String?
+  grade      Int?     @db.SmallInt
+  users      users    @relation(fields: [user_id], references: [id])
 }
 
 model student_payment {
-  id             String         @id(map: "payments_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id     String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  class_id       String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  paid_date      DateTime       @db.Timestamptz(6)
-  status         Status         @default(NOTPAID)
-  marked_user_id String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_at     DateTime       @default(now()) @db.Timestamptz(6)
-  payment_method Payment_Method @default(Cash)
-  classes        classes        @relation(fields: [class_id], references: [id])
-  users          users          @relation(fields: [marked_user_id], references: [id])
-  student        student        @relation(fields: [student_id], references: [id])
+  id                                          String         @id(map: "payments_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id                                  String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  class_id                                    String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paid_date                                   DateTime       @db.Timestamptz(6)
+  status                                      Status         @default(NOTPAID)
+  marked_user_id                              String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at                                  DateTime       @default(now()) @db.Timestamptz(6)
+  payment_method                              Payment_Method @default(Cash)
+  classes                                     classes        @relation(fields: [class_id], references: [id])
+  users_student_payment_marked_user_idTousers users          @relation("student_payment_marked_user_idTousers", fields: [marked_user_id], references: [id])
+  users_student_payment_student_idTousers     users          @relation("student_payment_student_idTousers", fields: [student_id], references: [id])
 }
 
 model subject {
@@ -195,58 +188,69 @@ model subject {
 }
 
 model tutor {
-  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id        String           @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  subject_id     String           @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  is_independent Boolean?         @default(true)
-  ratings        Float?           @db.Real
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String   @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subject_id     String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  is_independent Boolean? @default(true)
+  ratings        Float?   @db.Real
   qualifications String?
-  created_at     DateTime         @default(now()) @db.Timestamptz(6)
-  student_count  Int              @default(0)
-  class_count    Int              @default(0)
-  experience     Int              @default(0) @db.SmallInt
-  dob            DateTime         @db.Date
-  classes        classes[]
-  subject        subject          @relation(fields: [subject_id], references: [id])
-  users          users            @relation(fields: [user_id], references: [id])
-  tutor_payments tutor_payments[]
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  student_count  Int      @default(0)
+  class_count    Int      @default(0)
+  experience     Int      @default(0) @db.SmallInt
+  dob            DateTime @db.Date
+  subject        subject  @relation(fields: [subject_id], references: [id])
+  users          users    @relation(fields: [user_id], references: [id])
 }
 
 model tutor_payments {
-  id             String         @id(map: "tutor_payements_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  class_id       String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tutor_id       String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  amount         Float          @db.Real
-  status         Status         @default(NOTPAID)
-  paid_date      DateTime       @db.Timestamptz(6)
-  marked_user_id String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_at     DateTime       @default(now()) @db.Timestamptz(6)
-  payment_method Payment_Method @default(Cash)
-  classes        classes        @relation(fields: [class_id], references: [id])
-  users          users          @relation(fields: [marked_user_id], references: [id])
-  tutor          tutor          @relation(fields: [tutor_id], references: [id])
+  id                                         String         @id(map: "tutor_payements_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  class_id                                   String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tutor_id                                   String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  amount                                     Float          @db.Real
+  status                                     Status         @default(NOTPAID)
+  paid_date                                  DateTime       @db.Timestamptz(6)
+  marked_user_id                             String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at                                 DateTime       @default(now()) @db.Timestamptz(6)
+  payment_method                             Payment_Method @default(Cash)
+  classes                                    classes        @relation(fields: [class_id], references: [id])
+  users_tutor_payments_marked_user_idTousers users          @relation("tutor_payments_marked_user_idTousers", fields: [marked_user_id], references: [id])
+  users_tutor_payments_tutor_idTousers       users          @relation("tutor_payments_tutor_idTousers", fields: [tutor_id], references: [id])
 }
 
 model users {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  full_name       String
-  email           String            @unique
-  password        String
-  address_line1   String
-  address_line2   String?
-  phone           String
-  created_at      DateTime          @default(now()) @db.Timestamptz(6)
-  district_id     String            @db.Uuid
-  description     String?
-  status          Status            @default(ACTIVE)
-  role            Role
-  attendance      attendance[]
-  institute       institute?
-  student         student?
-  student_payment student_payment[]
-  tutor           tutor?
-  tutor_payments  tutor_payments[]
-  district        district          @relation(fields: [district_id], references: [id])
+  id                                                    String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  full_name                                             String
+  email                                                 String            @unique
+  password                                              String
+  address_line1                                         String
+  address_line2                                         String?
+  phone                                                 String
+  created_at                                            DateTime          @default(now()) @db.Timestamptz(6)
+  district_id                                           String            @db.Uuid
+  description                                           String?
+  status                                                Status            @default(ACTIVE)
+  role                                                  Role
+  attendance_attendance_marked_user_idTousers           attendance[]      @relation("attendance_marked_user_idTousers")
+  attendance_attendance_student_idTousers               attendance[]      @relation("attendance_student_idTousers")
+  class_students                                        class_students[]
+  classes_classes_institute_idTousers                   classes[]         @relation("classes_institute_idTousers")
+  classes_classes_tutor_idTousers                       classes[]         @relation("classes_tutor_idTousers")
+  institute                                             institute?
+  student                                               student?
+  student_payment_student_payment_marked_user_idTousers student_payment[] @relation("student_payment_marked_user_idTousers")
+  student_payment_student_payment_student_idTousers     student_payment[] @relation("student_payment_student_idTousers")
+  tutor                                                 tutor?
+  tutor_payments_tutor_payments_marked_user_idTousers   tutor_payments[]  @relation("tutor_payments_marked_user_idTousers")
+  tutor_payments_tutor_payments_tutor_idTousers         tutor_payments[]  @relation("tutor_payments_tutor_idTousers")
+  district                                              district          @relation(fields: [district_id], references: [id])
+}
+
+enum Payment_Method {
+  Cash
+  Card
+  Bank_Transfer @map("Bank Transfer")
+  Online
 }
 
 enum Role {
@@ -266,11 +270,6 @@ enum Status {
   FAILED
   PAID
   NOTPAID
-}
-
-enum Payment_Method {
-  Cash
-  Card
-  Bank_Transfer @map("Bank Transfer")
-  Online
+  PRESENT
+  ABSENT
 }
