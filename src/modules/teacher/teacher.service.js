@@ -14,6 +14,12 @@ const teacherInclude = {
       status: true,
       role: true,
       created_at: true,
+      district: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   },
   subject: {
@@ -24,6 +30,72 @@ const teacherInclude = {
   },
 };
 
+
+const calculateAge = (dob) => {
+  const birthDate = new Date(dob);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
+};
+
+
+export const getTeachersByInstituteService = async (instituteId) => {
+  try {
+    const instituteClasses = await prisma.classes.findMany({
+      where: {
+        institute_id: instituteId,
+      },
+      select: {
+        tutor_id: true, // this is users.id (not tutor.id)
+      },
+    });
+
+    const tutorUserIds = [
+      ...new Set(
+        instituteClasses
+          .map((item) => item.tutor_id)
+          .filter(Boolean)
+      ),
+    ];
+
+    if (tutorUserIds.length === 0) return [];
+
+    const teachers = await prisma.tutor.findMany({
+      where: {
+        user_id: {
+          in: tutorUserIds, // ✅ tutor.user_id === users.id === classes.tutor_id
+        },
+      },
+      include: teacherInclude,
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    return teachers.map((teacher) => ({
+      ...teacher,
+      age: calculateAge(teacher.dob),
+    }));
+  } catch (error) {
+    throw new Error(
+      `Error fetching teachers by institute: ${error.message}`
+    );
+  }
+};
+
+
+
 export const getAllTeachersService = async () => {
   try {
     const teachers = await prisma.tutor.findMany({
@@ -33,7 +105,12 @@ export const getAllTeachersService = async () => {
       },
     });
 
-    return teachers;
+    const formattedTeachers = teachers.map((teacher) => ({
+      ...teacher,
+      age: calculateAge(teacher.dob),
+    }));
+    
+    return formattedTeachers;
   } catch (error) {
     throw new Error(`Error fetching teachers: ${error.message}`);
   }
@@ -54,7 +131,10 @@ export const getTeacherByEmailService = async (email) => {
       throw new Error("Teacher not found");
     }
 
-    return teacher;
+    return {
+      ...teacher,
+      age: calculateAge(teacher.dob),
+    };
   } catch (error) {
     if (error.message === "Teacher not found") {
       throw error;
@@ -74,7 +154,10 @@ export const getTeacherByIdService = async (teacherId) => {
       throw new Error("Teacher not found");
     }
 
-    return teacher;
+    return {
+      ...teacher,
+      age: calculateAge(teacher.dob),
+    };
   } catch (error) {
     if (error.message === "Teacher not found") {
       throw error;

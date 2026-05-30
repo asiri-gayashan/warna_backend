@@ -4,6 +4,7 @@ import {
   getTeacherByIdService,
   updateTeacherService,
   removeTeacherService,
+  getTeachersByInstituteService,
 } from "./teacher.service.js";
 
 const UUID_REGEX =
@@ -26,6 +27,26 @@ const validateTeacherId = (teacherId) => {
 
   return { isValid: true };
 };
+
+
+export const getTeachersByInstituteController = async (req, res) => {
+  try {
+    const { instituteId } = req.params;
+
+    const teachers = await getTeachersByInstituteService(instituteId);
+
+    return res.status(200).json({
+      success: true,
+      data: teachers,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 
 const validateEmail = (email) => {
   if (!email || typeof email !== "string") {
