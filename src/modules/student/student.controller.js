@@ -4,6 +4,7 @@ import {
   getStudentByIdService,
   updateStudentService,
   removeStudentService,
+  getStudentsByInstituteService,
 } from "./student.service.js";
 
 import {
@@ -186,3 +187,21 @@ export const removeStudent = async (req, res) => {
   }
 };
 
+
+export const getStudentsByInstituteController = async (req, res) => {
+  try {
+    const { instituteId } = req.params;
+
+    const students = await getStudentsByInstituteService(instituteId);
+
+    return res.status(200).json({
+      success: true,
+      data: students,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

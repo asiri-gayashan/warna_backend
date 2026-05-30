@@ -14,9 +14,39 @@ const studentInclude = {
       status: true,
       role: true,
       created_at: true,
+
+      district: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   },
 };
+
+
+
+
+const calculateAge = (dob) => {
+  const birthDate = new Date(dob);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
+};
+
+
 
 export const getAllStudentsService = async () => {
   try {
@@ -27,7 +57,10 @@ export const getAllStudentsService = async () => {
       },
     });
 
-    return students;
+    return students.map((student) => ({
+      ...student,
+      age: calculateAge(student.dob),
+    }));
   } catch (error) {
     throw new Error(`Error fetching students: ${error.message}`);
   }
@@ -48,7 +81,12 @@ export const getStudentByEmailService = async (email) => {
       throw new Error("Student not found");
     }
 
-    return student;
+    // return student;
+    return {
+      ...student,
+      age: calculateAge(student.dob),
+    };
+
   } catch (error) {
     if (error.message === "Student not found") {
       throw error;
@@ -68,7 +106,10 @@ export const getStudentByIdService = async (studentId) => {
       throw new Error("Student not found");
     }
 
-    return student;
+    return {
+      ...student,
+      age: calculateAge(student.dob),
+    };
   } catch (error) {
     if (error.message === "Student not found") {
       throw error;
@@ -186,4 +227,47 @@ export const removeStudentService = async (studentId) => {
     throw new Error(`Error removing student: ${error.message}`);
   }
 };
+
+
+export const getStudentsByInstituteService = async (instituteId) => {
+  try {
+    const enrollments = await prisma.class_students.findMany({
+      where: {
+        classes: {
+          institute_id: instituteId,
+        },
+      },
+      select: {
+        student_id: true,
+      },
+    });
+
+    const studentUserIds = [
+      ...new Set(enrollments.map((item) => item.student_id)),
+    ];
+
+    const students = await prisma.student.findMany({
+      where: {
+        user_id: {
+          in: studentUserIds,
+        },
+      },
+      include: studentInclude,
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    return students.map((student) => ({
+      ...student,
+      age: calculateAge(student.dob),
+    }));
+  } catch (error) {
+    throw new Error(
+      `Error fetching students by institute: ${error.message}`
+    );
+  }
+};
+
+
 
