@@ -4,6 +4,7 @@ import {
   getClassByIdService,
   updateClassService,
   deleteClassService,
+  getClassesByTutorAndInstituteService,
 } from "./classes.service.js";
 
 import {
@@ -207,3 +208,30 @@ export const deleteClass = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+
+export const getClassesByTutorAndInstitute = async (req, res) => {
+  try {
+    const { tutorId, instituteId } = req.params;
+
+    const classes = await getClassesByTutorAndInstituteService(tutorId, instituteId);
+
+    return res.status(200).json({
+      success: true,
+      data: classes,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
+

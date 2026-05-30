@@ -258,3 +258,28 @@ export const deleteClassService = async (classId) => {
     throw new Error(`Error deleting class: ${error.message}`);
   }
 };
+
+
+
+export const getClassesByTutorAndInstituteService = async (tutorId, instituteId) => {
+  try {
+    const classes = await prisma.classes.findMany({
+      where: {
+        tutor_id: tutorId,
+        institute_id: instituteId,
+      },
+      include: classInclude,
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    return classes.map(formatClassResponse);
+  } catch (error) {
+    throw new Error(`Error fetching classes by tutor and institute: ${error.message}`);
+  }
+};
+
+
+
+
