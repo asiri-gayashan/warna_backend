@@ -12,6 +12,8 @@ import enrollstudentRoutes from "./src/modules/enrollstudent/enrollstudent.route
 import studentRoutes from "./src/modules/student/student.routes.js";
 import attendanceRoutes from "./src/modules/attendance/attendance.route.js";
 import studentPaymentRoutes from "./src/modules/studentpayment/student-payment.routes.js";
+import instituteDashboardRouter from "./src/modules/dashboard/institute_dashboard.route.js";
+import instituteFinanceRouter from "./src/modules/institutefinance/institute_finance.route.js";
 
 const app = express();
 app.use(express.json());
@@ -21,7 +23,7 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+ 
 
 app.use("/api/users", mainrouter);
 app.use("/api/auth", authRoutes);
@@ -32,7 +34,8 @@ app.use("/api/enrollstudents", enrollstudentRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/student-payments", studentPaymentRoutes);
-
+app.use("/api/institute", instituteDashboardRouter);
+app.use("/api/institute/data", instituteFinanceRouter);
 
 
 const PORT = process.env.PORT;

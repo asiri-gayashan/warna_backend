@@ -15,7 +15,7 @@ router.post("/", (req, res) => {
 
 router.put("/", (req, res) => {
     res.json({ message: "User updated" });
-});
+}); 
 
 router.delete("/", (req, res) => {
     res.json({ message: "User deleted" });
