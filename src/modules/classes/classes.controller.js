@@ -6,6 +6,7 @@ import {
   deleteClassService,
   getClassesByTutorAndInstituteService,
   getStudentClassesByInstituteService,
+  getStudentClassesByTutorService,
   getAllInstituteClassesService,
   getAllTutorClassesService,
 } from "./classes.service.js";
@@ -286,6 +287,24 @@ export const getStudentClassesByInstituteController = async (
         studentId,
         instituteId
       );
+
+    return res.status(200).json({
+      success: true,
+      data: classes,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getStudentClassesByTutorController = async (req, res) => {
+  try {
+    const { studentId, tutorId } = req.params;
+
+    const classes = await getStudentClassesByTutorService(studentId, tutorId);
 
     return res.status(200).json({
       success: true,

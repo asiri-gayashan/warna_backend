@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { createClass, getAllClasses, getClassById, updateClass, deleteClass, getClassesByTutorAndInstitute, getStudentClassesByInstituteController, getAllInstituteClasses, getAllTutorClasses } from './classes.controller.js';
+import { createClass, getAllClasses, getClassById, updateClass, deleteClass, getClassesByTutorAndInstitute, getStudentClassesByInstituteController, getStudentClassesByTutorController, getAllInstituteClasses, getAllTutorClasses } from './classes.controller.js';
 
 router.post('/create', createClass);
 router.get('/', getAllClasses);
@@ -13,6 +13,7 @@ router.delete('/:id', deleteClass);
 
 router.get("/tutor/:tutorId/institute/:instituteId", getClassesByTutorAndInstitute);
 router.get("/students/:studentId/institute/:instituteId", getStudentClassesByInstituteController);
+router.get("/students/:studentId/tutor/:tutorId", getStudentClassesByTutorController);
 
 export default router;
 

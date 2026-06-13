@@ -350,3 +350,33 @@ export const getStudentClassesByInstituteService = async (
     );
   }
 };
+
+export const getStudentClassesByTutorService = async (
+  studentId,
+  tutorId
+) => {
+  try {
+    const classes = await prisma.class_students.findMany({
+      where: {
+        student_id: studentId,
+        classes: {
+          tutor_id: tutorId,
+        },
+      },
+      include: {
+        classes: {
+          include: classInclude,
+        },
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    return classes.map((item) => formatClassResponse(item.classes));
+  } catch (error) {
+    throw new Error(
+      `Error fetching student classes by tutor: ${error.message}`
+    );
+  }
+};
