@@ -34,7 +34,7 @@ export const getAllEnrollStudentsByClassId = async (req, res) => {
   try {
     const { classId } = req.params;
     const validation = validateClassId(classId);
-
+ 
     if (!validation.isValid) {
       return res.status(400).json({
         status: false,
