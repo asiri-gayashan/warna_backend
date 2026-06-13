@@ -229,6 +229,46 @@ export const removeStudentService = async (studentId) => {
 };
 
 
+export const getStudentsByTutorService = async (tutorId) => {
+  try {
+    const enrollments = await prisma.class_students.findMany({
+      where: {
+        classes: {
+          tutor_id: tutorId,
+        },
+      },
+      select: {
+        student_id: true,
+      },
+    });
+
+    const studentUserIds = [
+      ...new Set(enrollments.map((item) => item.student_id)),
+    ];
+
+    const students = await prisma.student.findMany({
+      where: {
+        user_id: {
+          in: studentUserIds,
+        },
+      },
+      include: studentInclude,
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    return students.map((student) => ({
+      ...student,
+      age: calculateAge(student.dob),
+    }));
+  } catch (error) {
+    throw new Error(
+      `Error fetching students by tutor: ${error.message}`
+    );
+  }
+};
+
 export const getStudentsByInstituteService = async (instituteId) => {
   try {
     const enrollments = await prisma.class_students.findMany({

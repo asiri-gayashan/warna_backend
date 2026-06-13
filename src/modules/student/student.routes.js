@@ -6,6 +6,7 @@ import {
   updateStudent,
   removeStudent,
   getStudentsByInstituteController,
+  getStudentsByTutorController,
 } from "./student.controller.js";
 
 const router = express.Router();
@@ -16,6 +17,7 @@ router.get("/:id", getStudentById);
 router.put("/:id", updateStudent);
 router.delete("/:id", removeStudent);
 router.get("/institute/:instituteId", getStudentsByInstituteController);
+router.get("/tutor/:tutorId", getStudentsByTutorController);
 
 export default router;
 
