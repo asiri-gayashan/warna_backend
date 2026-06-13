@@ -121,7 +121,7 @@ export const createClassService = async (data) => {
         name: data.name,
         subject_id: data.subject_id,
         tutor_id: data.tutor_id,
-        institute_id: data.institute_id,
+        institute_id: data.institute_id ?? null,
         start_time,
         end_time,
         day: data.day,
@@ -129,7 +129,7 @@ export const createClassService = async (data) => {
         location: data.location,
         grade: data.grade,
         amount: data.amount,
-        institute_commission: data.institute_commission,
+        institute_commission: data.institute_commission ?? 0,
         status: data.status || "ACTIVE",
         student_count: data.student_count ?? 0,
       },
@@ -140,6 +140,7 @@ export const createClassService = async (data) => {
     if (error.message === SCHEDULE_CONFLICT_MESSAGE) {
       throw error;
     }
+    console.log(error.message);
     throw new Error(`Error creating class: ${error.message}`);
   }
 };
@@ -147,6 +148,42 @@ export const createClassService = async (data) => {
 export const getAllClassesService = async () => {
   try {
     const classes = await prisma.classes.findMany({
+      include: classInclude,
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    return classes.map(formatClassResponse);
+  } catch (error) {
+    throw new Error(`Error fetching classes: ${error.message}`);
+  }
+};
+
+export const getAllInstituteClassesService = async (instituteId) => {
+  try {
+    const classes = await prisma.classes.findMany({
+      where: {
+        institute_id: instituteId,
+      },
+      include: classInclude,
+      orderBy: {
+        created_at: "desc", 
+      },
+    });
+
+    return classes.map(formatClassResponse);
+  } catch (error) {
+    throw new Error(`Error fetching classes: ${error.message}`);
+  }
+};
+
+export const getAllTutorClassesService = async (tutorId) => {
+  try {
+    const classes = await prisma.classes.findMany({
+      where: {
+        tutor_id: tutorId,
+      },
       include: classInclude,
       orderBy: {
         created_at: "desc",

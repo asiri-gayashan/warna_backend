@@ -1,9 +1,12 @@
 import express from 'express';
 const router = express.Router();
-import { createClass, getAllClasses, getClassById, updateClass, deleteClass, getClassesByTutorAndInstitute, getStudentClassesByInstituteController } from './classes.controller.js';
+import { createClass, getAllClasses, getClassById, updateClass, deleteClass, getClassesByTutorAndInstitute, getStudentClassesByInstituteController, getAllInstituteClasses, getAllTutorClasses } from './classes.controller.js';
 
 router.post('/create', createClass);
 router.get('/', getAllClasses);
+router.get('/institute/:id', getAllInstituteClasses);
+router.get('/tutor/:tutorId', getAllTutorClasses);
+
 router.get('/:id', getClassById);
 router.put('/:id', updateClass);
 router.delete('/:id', deleteClass);

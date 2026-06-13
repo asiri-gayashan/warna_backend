@@ -25,13 +25,6 @@ export const validateCreateClass = (data) => {
     errors.tutor_id = "tutor_id is required and must be a valid UUID";
   }
 
-  if (
-    data.institute_id !== undefined &&
-    data.institute_id !== null &&
-    !isValidUuid(data.institute_id)
-  ) {
-    errors.institute_id = "institute_id must be a valid UUID";
-  }
 
   if (!isValidTime(data.start_time)) {
     errors.start_time =
@@ -70,14 +63,7 @@ export const validateCreateClass = (data) => {
     errors.amount = "amount must be a non-negative number";
   }
 
-  if (
-    data.institute_commission !== undefined &&
-    (typeof data.institute_commission !== "number" ||
-      data.institute_commission < 0)
-  ) {
-    errors.institute_commission =
-      "institute_commission must be a non-negative number";
-  }
+ 
 
   if (data.description !== undefined && typeof data.description !== "string") {
     errors.description = "description must be a string";

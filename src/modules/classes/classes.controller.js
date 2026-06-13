@@ -6,6 +6,8 @@ import {
   deleteClassService,
   getClassesByTutorAndInstituteService,
   getStudentClassesByInstituteService,
+  getAllInstituteClassesService,
+  getAllTutorClassesService,
 } from "./classes.service.js";
 
 import {
@@ -53,12 +55,31 @@ export const createClass = async (req, res) => {
       message: error.message || "Error creating class",
     });
   }
-}; 
+};
 
 // Get all classes
 export const getAllClasses = async (req, res) => {
   try {
     const classes = await getAllClassesService();
+
+    res.status(200).json({
+      status: true,
+      message: "Classes retrieved successfully",
+      count: classes.length,
+      data: classes,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message || "Error fetching classes",
+    });
+  }
+};
+// Get all classes
+export const getAllInstituteClasses = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const classes = await getAllInstituteClassesService(id);
 
     res.status(200).json({
       status: true,
@@ -214,6 +235,25 @@ export const deleteClass = async (req, res) => {
 
 
 
+
+export const getAllTutorClasses = async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+    const classes = await getAllTutorClassesService(tutorId);
+
+    return res.status(200).json({
+      status: true,
+      message: "Tutor classes retrieved successfully",
+      count: classes.length,
+      data: classes,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: error.message || "Error fetching tutor classes",
+    });
+  }
+};
 
 export const getClassesByTutorAndInstitute = async (req, res) => {
   try {
